@@ -8,7 +8,7 @@ CLASS Arrays
   arr[1] = 4;
   arr[2] = 6;
   arr[3] = 8;
-  arr[4] = 10
+  arr[4] = 10;
 
   PRINT arr[0];
   PRINT arr[X];
