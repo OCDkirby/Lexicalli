@@ -38,7 +38,7 @@ CLASS LargestCommonDenominator{
     }
 
     /*  Main Program.  */
-    X = M;  Y = N  CALL Multiply();
+    X = M;  Y = N;  CALL Multiply();
     X = 25;  Y = 3;  CALL Divide();
     X = 84;  Y = 36;  CALL GCD()
 }
