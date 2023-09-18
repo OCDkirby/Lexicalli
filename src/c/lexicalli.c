@@ -34,6 +34,7 @@ int mem_offset(enum Symbol_Class cls);
 void put_symbol(struct Symbol_t sym);
 
 // Find and extract symbols from the token list
+int class_symbol_check();
 int program_symbol_check();
 int var_symbol_check();
 int const_symbol_check();
@@ -76,18 +77,14 @@ int main(int argc, char **argv)
     token.tok_class = cls;
     
     // Symbol table checks
-    if(token.tok_class == XCLASS || token.tok_class == XPROC)
-    {
+    if(token.tok_class == XCLASS)
+      error = class_symbol_check();
+    else if(token.tok_class == XPROC)
       error = program_symbol_check();
-    }
     else if(token.tok_class == XVAR)
-    {
       error = var_symbol_check();
-    }
     else if(token.tok_class == XCONST)
-    {
       error = const_symbol_check();
-    }
     else if(token.tok_class == INTEGER)
     {
       // Place in symbol table
@@ -125,7 +122,7 @@ char* format_output(char* input, char *extension)
 
 int mem_offset(enum Symbol_Class cls)
 {
-  if(cls == SSUB)
+  if(cls == SPROC)
     return 8; // Size of class signature
   else if(cls == SVAR || cls == SCONST || cls == SNUM_LIT)
     return 4; // Size of integer
@@ -140,6 +137,23 @@ void put_symbol(struct Symbol_t sym)
     dsp += mem_offset(sym.sym_class);
 }
 
+int class_symbol_check()
+{
+  char name[128];
+  int cls;
+  if(fscanf(inf, "%s %d\n", name, &cls) != EOF)
+  {
+    if(cls == IDENT)
+    {
+      put_symbol((struct Symbol_t) { .name = name, .sym_class = SCLASS, .value = "-", .address = csp, .segment = CODE_SEGMENT });
+      return 0;
+    }
+    else
+      return 1; // Wrong token after CLASS
+  }
+  return EOF;
+}
+
 int program_symbol_check()
 {
   char name[128];
@@ -148,7 +162,7 @@ int program_symbol_check()
   {
     if(cls == IDENT)
     {
-      put_symbol((struct Symbol_t) { .name = name, .sym_class = SSUB, .value = "-", .address = csp, .segment = CODE_SEGMENT });
+      put_symbol((struct Symbol_t) { .name = name, .sym_class = SPROC, .value = "-", .address = csp, .segment = CODE_SEGMENT });
       return 0;
     }
     else

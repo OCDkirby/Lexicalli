@@ -45,39 +45,50 @@ alphabet = symbols ++ digits ++ letters ++ whitespace ++ [end_file]
 -- Structures and subroutines requiring modification later as I add more to the language
 reserved_words = ["CLASS", "VAR", "CONST", "IF", "THEN", "PROCEDURE", "WHILE", "DO", "CALL", "ODD"]
 -- Note: the end states are just rows of their number because the value doesn't matter, we never check that state
---                 L,  D,  *,  /,  =,  <, ws, er,  ;,  +,  -, lb, rb,  ,
-state_matrix = [[  5,  3,  2,  7, 11, 14,  0,  1, 17, 20, 22, 24, 26, 28 ], -- Start state
-                [  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1 ], -- Error
-                [ 18, 18, 18, 18, 18, 18, 18,  1,  1, 18, 18,  1,  1, 18 ], -- Intermediate * char
-                [  1,  3,  4,  4,  4,  4,  4,  1,  4,  4,  4,  4,  1,  4 ], -- Intermediate digit
-                [  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4 ], -- Integer
-                [  5,  5,  6,  6,  6,  6,  6,  1,  6,  6,  6,  6,  1,  6 ], -- Intermediate letters/digits
-                [  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6 ], -- Identifier
-                [ 10, 10,  8, 10, 10, 10, 10,  1,  1, 10, 10,  1,  1,  1 ], -- Intermediate / char
-                [  8,  8,  9,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8 ], -- /* and intermediate comment
-                [  8,  8,  8,  0,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8 ], -- */ and intermediate comment
-                [ 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10 ], -- Division operator
-                [ 12, 12,  1,  1, 13,  1, 12,  1,  1, 12, 12,  1,  1,  1 ], -- Struct bracket-list initialization later?
-                [ 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12 ], -- Assignment operator
-                [ 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13 ], -- Comparison operator
-                [ 15, 15,  1,  1, 16, 15, 15,  1,  1, 15, 15,  1,  1,  1 ], -- Intermediate < char
-                [ 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15 ], -- < operator 
-                [ 19, 19,  1,  1,  1,  1, 19,  1,  1, 19, 19,  1,  1,  1 ], -- Intermediate for <=
-                [ 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17 ], -- semicolon
-                [ 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18 ], -- Multiplication operator
-                [ 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19 ], -- <= operator   
-                [ 21, 21,  1,  1,  1,  1, 21,  1,  1,  1, 21,  1,  1, 21 ], -- Note that element 9 can go to an increment operator later
-                [ 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21 ], -- Addition operator
-                [ 23, 23,  1,  1,  1,  1, 23,  1,  1,  1, 23,  1,  1, 23 ], -- Similar note to list 20 for decrement
-                [ 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23 ], -- Subtraction operator
-                [ 25, 25,  1,  1,  1,  1, 25,  1,  1,  1, 25, 25, 25,  1 ], -- Intermediate { char
-                [ 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25 ], -- Open block
-                [ 27, 27,  1,  1,  1,  1, 27,  1, 27,  1, 27, 27, 27, 27 ], -- Intemediate } char
-                [ 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27 ], -- Close block
-                [ 29, 29,  1,  1,  1,  1, 29,  1,  1, 29, 29, 29, 29,  1 ], -- Intermediate , char
-                [ 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29 ]] -- Comma separator
+--                 L,  D,  *,  /,  =,  <, ws, er,  ;,  +,  -, lb, rb,  ,,  (,  ),  >,  !
+state_matrix = [[  5,  3,  2,  7, 11, 14,  0,  1, 17, 20, 22, 24, 26, 28, 30, 32, 34, 38 ], -- Start state
+                [  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1 ], -- Error
+                [ 18, 18, 18, 18, 18, 18, 18,  1,  1, 18, 18,  1,  1, 18, 18, 18,  1,  1 ], -- Intermediate * char
+                [  1,  3,  4,  4,  4,  4,  4,  1,  4,  4,  4,  4,  1,  4,  1,  1,  4,  4 ], -- Intermediate digit
+                [  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4 ], -- Integer
+                [  5,  5,  6,  6,  6,  6,  6,  1,  6,  6,  6,  6,  1,  6,  6,  1,  6,  6 ], -- Intermediate letters/digits
+                [  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6 ], -- Identifier
+                [ 10, 10,  8, 10, 10, 10, 10,  1,  1, 10, 10,  1,  1,  1, 10, 10,  1,  1 ], -- Intermediate / char
+                [  8,  8,  9,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8 ], -- /* and intermediate comment
+                [  8,  8,  8,  0,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8 ], -- */ and intermediate comment
+                [ 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10 ], -- Division operator
+                [ 12, 12,  1,  1, 13,  1, 12,  1,  1, 12, 12,  1,  1,  1, 12,  1,  1,  1 ], -- Intermediate =
+                [ 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12 ], -- Assignment operator
+                [ 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13 ], -- Comparison operator
+                [ 15, 15,  1,  1, 16, 15, 15,  1,  1, 15, 15,  1,  1,  1, 15,  1,  1,  1 ], -- Intermediate < char
+                [ 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15 ], -- < operator 
+                [ 19, 19,  1,  1,  1,  1, 19,  1,  1, 19, 19,  1,  1,  1, 19,  1,  1,  1 ], -- Intermediate for <=
+                [ 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17 ], -- semicolon
+                [ 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18 ], -- Multiplication
+                [ 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19 ], -- <= operator   
+                [ 21, 21,  1,  1,  1,  1, 21,  1,  1,  1, 21,  1,  1, 21, 21,  1,  1,  1 ], -- Intermediate +
+                [ 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21 ], -- Addition operator
+                [ 23, 23,  1,  1,  1,  1, 23,  1,  1,  1, 23,  1,  1, 23, 23,  1,  1,  1 ], -- Intermediate -
+                [ 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23 ], -- Subtraction operator
+                [ 25, 25,  1,  1,  1,  1, 25,  1,  1, 25, 25, 25, 25, 25, 25,  1,  1,  1 ], -- Intermediate { char
+                [ 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25 ], -- Open block
+                [ 27, 27,  1,  1,  1,  1, 27,  1, 27, 27, 27, 27, 27, 27,  1, 27,  1,  1 ], -- Intemediate } char
+                [ 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27 ], -- Close block
+                [ 29, 29,  1,  1,  1,  1, 29,  1,  1, 29, 29, 29, 29,  1, 29,  1,  1,  1 ], -- Intermediate , char
+                [ 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29 ], -- Comma separator
+                [ 31, 31,  1,  1,  1,  1, 31,  1,  1, 31, 31, 31, 31,  1, 31, 31,  1,  1 ], -- Intermediate (
+                [ 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31, 31 ], -- Left paren
+                [ 33, 33,  1,  1,  1,  1, 33,  1, 33, 33, 33, 33, 33,  1, 33, 33,  1,  1 ], -- Intermediate )
+                [ 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33, 33 ], -- Right paren
+                [ 35, 35,  1,  1, 36,  1, 35,  1,  1, 35, 35,  1,  1,  1, 35,  1,  1,  1 ], -- Intermediate >
+                [ 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35, 35 ], -- > operator
+                [ 37, 37,  1,  1,  1,  1, 37,  1,  1, 37, 37, 37,  1,  1, 37,  1,  1,  1 ], -- Intermediate >=
+                [ 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37, 37 ], -- >= operator
+                [  1,  1,  1,  1, 39,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1 ], -- Intermediate !
+                [ 40, 40,  1,  1,  1,  1, 40,  1,  1, 40, 40,  1,  1,  1, 40,  1,  1,  1 ], -- Intermediate !=
+                [ 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40, 40 ]] -- !=
                 
-end_states =    [ 1, 4, 6, 10, 12, 13, 15, 17, 18, 19, 21, 23, 25, 27, 29 ] -- Stop the parse on these states
+end_states =    [ 1, 4, 6, 10, 12, 13, 15, 17, 18, 19, 21, 23, 25, 27, 29, 31, 33, 35, 37, 40 ] -- Stop the parse on these states
 dump_states =   [ 0, 8, 9 ] -- Flush the token builder list on these states
 state_transition :: Int -> Char -> Int -- Automated row-column lookup
 state_transition s c | (elem c letters)            = state_matrix!!s!!0
@@ -93,6 +104,10 @@ state_transition s c | (elem c letters)            = state_matrix!!s!!0
                      | (c == '{')                  = state_matrix!!s!!11
                      | (c == '}')                  = state_matrix!!s!!12
                      | (c == ',')                  = state_matrix!!s!!13
+                     | (c == '(')                  = state_matrix!!s!!14
+                     | (c == ')')                  = state_matrix!!s!!15
+                     | (c == '>')                  = state_matrix!!s!!16
+                     | (c == '!')                  = state_matrix!!s!!17
                      | otherwise                   = state_matrix!!s!!7 -- Unexpected/illegal char
 
 -- Unchanging helper subroutines
