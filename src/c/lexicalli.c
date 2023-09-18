@@ -74,9 +74,9 @@ int main(int argc, char **argv)
   {
     token.name = name;
     token.tok_class = cls;
-    //printf("%s %d\n", name, cls);
+    
     // Symbol table checks
-    if(token.tok_class == XCLASS)
+    if(token.tok_class == XCLASS || token.tok_class == XPROC)
     {
       error = program_symbol_check();
     }
@@ -100,7 +100,7 @@ int main(int argc, char **argv)
   }
   
   if(error)
-    printf("Lexicalli: Symbol Table Failure\n"); // Do error checking here
+    printf("Lexicalli: Symbol Table Failure: code %d\n", error); // Do error checking here
   else
     printf("Lexicalli: Symbol Table Success\n");
   
@@ -162,12 +162,17 @@ int var_symbol_check()
   char name[128];
   char val[128];
   int cls;
+  int skip_to_comma = 0;
   while(fscanf(inf, "%s %d\n", name, &cls) != EOF)
   {
-    if(cls == COMMA)
+    if(skip_to_comma)
       continue;
-      
-    if(cls == IDENT)
+    
+    if(cls == COMMA)
+    {
+      skip_to_comma = 0;
+    }
+    else if(cls == IDENT)
     {
       if(fscanf(inf, "%s %d\n", val, &cls) != EOF)
       {
@@ -181,6 +186,7 @@ int var_symbol_check()
             }
             else if(cls == IDENT) // That's a semantic analyzer's job
             {
+              skip_to_comma = 1;
               put_symbol((struct Symbol_t) { .name = name, .sym_class = SVAR, .value = "-", .address = dsp, .segment = DATA_SEGMENT });
             } 
             else
@@ -213,12 +219,17 @@ int const_symbol_check()
   char name[128];
   char val[128];
   int cls;
+  int skip_to_comma = 0;
   while(fscanf(inf, "%s %d\n", name, &cls) != EOF)
   {
-    if(cls == COMMA)
+    if(skip_to_comma)
       continue;
-      
-    if(cls == IDENT)
+    
+    if(cls == COMMA)
+    {
+      skip_to_comma = 0;
+    }
+    else if(cls == IDENT)
     {
       if(fscanf(inf, "%s %d\n", val, &cls) != EOF)
       {
@@ -232,6 +243,7 @@ int const_symbol_check()
             }
             else if(cls == IDENT) // That's a semantic analyzer's job
             {
+              skip_to_comma = 1;
               put_symbol((struct Symbol_t) { .name = name, .sym_class = SCONST, .value = "-", .address = dsp, .segment = DATA_SEGMENT });
             } 
             else
