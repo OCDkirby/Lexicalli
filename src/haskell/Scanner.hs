@@ -12,6 +12,7 @@ import Foreign.C.String
 import Data.Char (ord)
 import Data.List (elemIndex)
 import Data.Maybe (fromJust)
+import Control.Monad (when)
 import DFA
 
 -- Make certain C functions available to the linker
@@ -21,7 +22,94 @@ foreign import capi "lexicalli/interface.h put_token" put_token :: CString -> CI
 -- Helper IO
 -- Wrapper for getting the character via C
 getCharCast :: IO Char
-getCharCast = do castCCharToChar <$> get_char
+getCharCast = castCCharToChar <$> get_char
+
+-- Column in state transition matrix for each character
+getCharType :: Char -> Int
+getCharType c | c `elem` letters          = 0
+              | c `elem` digits           = 1
+              | c == '*'                  = 2
+              | c == '/'                  = 3
+              | c == '='                  = 4
+              | c == '<'                  = 5
+              | c `elem` whitespace       = 6
+              | c == ';' || c == end_file = 8 
+              | c == '+'                  = 9
+              | c == '-'                  = 10
+              | c == '{'                  = 11
+              | c == '}'                  = 12
+              | c == ','                  = 13
+              | c == '('                  = 14
+              | c == ')'                  = 15
+              | c == '>'                  = 16
+              | c == '!'                  = 17
+              | c == '['                  = 18
+              | c == ']'                  = 19
+              | otherwise                 = 7 -- Unexpected/illegal char
+
+-- English name for each character type
+getTokenName :: Int -> String
+getTokenName cls | cls ==  0 = "letter"
+                 | cls ==  1 = "digit"
+                 |  cls ==  2
+                 || cls ==  3
+                 || cls ==  9
+                 || cls == 10 = "arithmetic"
+                 | cls ==  4 = "="
+                 |  cls ==  5
+                 || cls == 16
+                 || cls == 17 = "comparison"
+                 | cls ==  6 = "whitespace"
+                 | cls ==  7 = "error"
+                 | cls ==  8 = "semicolon"
+                 | cls == 11 = "{"
+                 | cls == 12 = "}"
+                 | cls == 13 = "comma"
+                 | cls == 14 = "("
+                 | cls == 15 = ")"
+                 | cls == 18 = "["
+                 | cls == 19 = "]"
+
+-- Print the non-error possibilities for a single row of the state table
+printRow :: [Int] -> Int -> Bool -> Bool -> IO ()
+printRow [st] counter saidArithmetic saidComparison = do
+  let sa = saidArithmetic || getTokenName counter == "arithmetic"
+  let sc = saidComparison || getTokenName counter == "comparison"
+  when (st /= 1 
+    && ((not saidArithmetic || (saidArithmetic && getTokenName counter /= "arithmetic"))
+     || (not saidComparison || (saidComparison && getTokenName counter /= "comparison"))))
+    $ putStr $ getTokenName counter ++ ","
+
+printRow (st:rest) counter saidArithmetic saidComparison = do
+  let sa = saidArithmetic || getTokenName counter == "arithmetic"
+  let sc = saidComparison || getTokenName counter == "comparison"
+  when (st /= 1 
+    && (not saidArithmetic || (saidArithmetic && getTokenName counter /= "arithmetic"))
+    && (not saidComparison || (saidComparison && getTokenName counter /= "comparison")))
+    $ putStr $ getTokenName counter ++ ", "
+  printRow rest (counter + 1) sa sc
+
+-- Get a state from a chain of tokens by backtracking to the first 
+backtrackStates :: String -> Char -> Int
+backtrackStates [] tok = stateTransition 0 tok
+backtrackStates (prev:rest) tok = stateTransition (backtrackStates rest prev) tok
+
+-- Print the error explanation
+printErrorMessage :: String -> Char -> IO ()
+printErrorMessage [prev] c = do
+  let row = state_matrix!!stateTransition 0 prev
+  putStr $ "In expression \ESC[33m" ++ [prev] ++ [c] ++ "\ESC[0m\n\tExpected any of: "
+  printRow row 0 False False
+  putStr "\n\tFound: \ESC[33m"
+  putStr [c]
+  putStrLn "\ESC[0m"
+printErrorMessage partial@(t:rest) c = do
+  let row = state_matrix!!backtrackStates (reverse rest) t
+  putStr $ "In expression \ESC[33m" ++ partial ++ [c] ++ "\ESC[0m\n\tExpected any of: "
+  printRow row 0 False False
+  putStr "\n\tFound: \ESC[33m"
+  putStr [c]
+  putStrLn "\ESC[0m"
 
 -- Reserved word checking and special cases where state number doesn't match the C enum value
 tokenStateToClass :: String -> Int -> Int
@@ -68,7 +156,7 @@ state_matrix = [[  5,  3,  2,  7, 11, 14,  0,  1, 17, 20, 22, 24, 26, 28, 30, 32
                 [ 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17 ], -- semicolon
                 [ 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18 ], -- Multiplication
                 [ 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19 ], -- <= operator   
-                [ 21, 21,  1,  1,  1,  1, 21,  1,  1,  1, 21,  1,  1, 21, 21,  1,  1,  1,  1,  1 ], -- Intermediate +
+                [ 21, 21,  1,  1,  1,  1, 21,  1,  1,  1,  1,  1,  1,  1, 21,  1,  1,  1,  1,  1 ], -- Intermediate +
                 [ 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21 ], -- Addition operator
                 [ 23, 23,  1,  1,  1,  1, 23,  1,  1,  1, 23,  1,  1, 23, 23,  1,  1,  1,  1,  1 ], -- Intermediate -
                 [ 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23 ], -- Subtraction operator
@@ -97,26 +185,7 @@ state_matrix = [[  5,  3,  2,  7, 11, 14,  0,  1, 17, 20, 22, 24, 26, 28, 30, 32
 end_states =    [ 1, 4, 6, 10, 12, 13, 15, 17, 18, 19, 21, 23, 25, 27, 29, 31, 33, 35, 37, 40, 42, 44 ] -- Stop the parse on these states
 dump_states =   [ 0, 8, 9 ] -- Flush the token builder list on these states
 stateTransition :: Int -> Char -> Int -- Automated row-column lookup
-stateTransition s c  | c `elem` letters            = state_matrix!!s!!0
-                     | c `elem` digits             = state_matrix!!s!!1
-                     | c == '*'                    = state_matrix!!s!!2
-                     | c == '/'                    = state_matrix!!s!!3
-                     | c == '='                    = state_matrix!!s!!4
-                     | c == '<'                    = state_matrix!!s!!5
-                     | c `elem` whitespace         = state_matrix!!s!!6
-                     | c == ';' || c == end_file   = state_matrix!!s!!8 
-                     | c == '+'                    = state_matrix!!s!!9
-                     | c == '-'                    = state_matrix!!s!!10
-                     | c == '{'                    = state_matrix!!s!!11
-                     | c == '}'                    = state_matrix!!s!!12
-                     | c == ','                    = state_matrix!!s!!13
-                     | c == '('                    = state_matrix!!s!!14
-                     | c == ')'                    = state_matrix!!s!!15
-                     | c == '>'                    = state_matrix!!s!!16
-                     | c == '!'                    = state_matrix!!s!!17
-                     | c == '['                    = state_matrix!!s!!18
-                     | c == ']'                    = state_matrix!!s!!19
-                     | otherwise                   = state_matrix!!s!!7 -- Unexpected/illegal char
+stateTransition s c = state_matrix!!s!!getCharType c
 
 -- Unchanging helper subroutines
 isEnd :: Int -> Bool
@@ -146,10 +215,13 @@ scan (sigma, delta, s, f) token gt dump = do
 -- I think they must have a hive inside the log, because it wouldn't
 --  make sense for them to have a hive inside the recursion.
 -- (they couldn't store any honey in the comb beyond depth 1)
-logAndRecurse :: (String, Int, Char) -> IO () 
+logAndRecurse :: (String, Int, Char) -> IO Int 
 logAndRecurse (token, st, ch) = do
   -- TODO Error checking based on current token and character
-  if st == 1 then putStrLn "Lexicalli: ERROR"
+  if st == 1 then do
+    putStrLn "\ESC[31mLexicalli: ERROR\ESC[0m"
+    printErrorMessage token ch
+    return 1
   else do
     -- Allocate a CString called tok_string on the stack and marshal token into it,
     --  then log the token and its token class to the file
@@ -157,7 +229,9 @@ logAndRecurse (token, st, ch) = do
       put_token tok_string ((CInt . fromIntegral) (tokenStateToClass token st)))
   
     -- Continue analysis
-    if ch == end_file then putStrLn "Lexicalli: Token Generation Success" -- file ended and we're in a successful state
+    if ch == end_file then do
+      putStrLn "Lexicalli: Token Generation Success" -- file ended and we're in a successful state
+      return 0
     else do
       -- Resume the parse in the state from the character
       -- The reason for this conditional is that I don't want a leading whitespace
@@ -170,7 +244,7 @@ logAndRecurse (token, st, ch) = do
         logAndRecurse tok
   
 -- Called by C
-run_scanner :: IO ()
+run_scanner :: IO CInt
 run_scanner = do
   putStrLn "Lexicalli: Starting token generation"
   
@@ -178,9 +252,10 @@ run_scanner = do
   tok1 <- scan (alphabet, stateTransition, 0, isEnd) [] getCharCast dumpToken
   
   -- Continue the token scan
-  logAndRecurse tok1
-  
+  ret <- logAndRecurse tok1
+  return $ fromIntegral ret
+
 -- Tell the compiler to generate C headers called "stubs" to interface
 -- The linker will take those stubs and the object files from compiled Haskell code and package them together
 --  for the final app
-foreign export ccall run_scanner :: IO ()
+foreign export ccall run_scanner :: IO CInt

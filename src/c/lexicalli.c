@@ -58,57 +58,87 @@ int main(int argc, char **argv)
   scanner_input = argv[1];
   scanner_output = format_output(scanner_input, ".lex");
   scanner_init(); // Set up the environment for Haskell
-  run_scanner(); // (Haskell) Run scanner on the input file
+  int32_t ret = run_scanner(); // (Haskell) Run scanner on the input file
   scanner_release(); // Close intermediates
   hs_exit(); // Release Haskell 
   
-  // Create symbol table
-  printf("Lexicalli: Starting symbol table generation\n");
-  char *symbol_output = format_output(argv[1], ".sym");
-  inf = fopen(scanner_output, "r");
-  of = fopen(symbol_output, "w");
-  struct Token_t token;
-  char name[128]; // I recognize this is bad design.
-  int cls;
-  int error = 0;
-  
-  fprintf(of, "Name, Class, Value, Address, Segment\n");
-  while(!error && fscanf(inf, "%s %d\n", name, &cls) != EOF)
+  if(ret == 0)
   {
-    token.name = name;
-    token.tok_class = cls;
+    // Create symbol table
+    printf("Lexicalli: Starting symbol table generation\n");
+    char *symbol_output = format_output(argv[1], ".sym");
+    inf = fopen(scanner_output, "r");
+    of = fopen(symbol_output, "w");
+    struct Token_t token;
+    char name[128]; // I recognize this is bad design.
+    int cls;
+    HsInt32 error = 0;
     
-    // Symbol table checks
-    if(token.tok_class == XCLASS)
-      error = class_symbol_check();
-    else if(token.tok_class == XPROC)
-      error = program_symbol_check();
-    else if(token.tok_class == XVAR)
-      error = var_symbol_check();
-    else if(token.tok_class == XCONST)
-      error = const_symbol_check();
-    else if(token.tok_class == INTEGER)
+    fprintf(of, "Name, Class, Value, Address, Segment\n");
+    while(!error && fscanf(inf, "%s %d\n", name, &cls) != EOF)
     {
-      // Place in symbol table
-      char symbol[strlen(token.name) + 4]; // INT[token.name]\0
-      strcpy(symbol, "INT");
-      strcat(symbol, token.name);
+      token.name = name;
+      token.tok_class = cls;
       
-      put_symbol((struct Symbol_t) { .name = symbol, .sym_class = SNUM_LIT, .value = token.name, .address = dsp, .segment = DATA_SEGMENT });
+      // Symbol table checks
+      if(token.tok_class == XCLASS)
+        error = class_symbol_check();
+      else if(token.tok_class == XPROC)
+        error = program_symbol_check();
+      else if(token.tok_class == XVAR)
+        error = var_symbol_check();
+      else if(token.tok_class == XCONST)
+        error = const_symbol_check();
+      else if(token.tok_class == INTEGER)
+      {
+        // Place in symbol table
+        char symbol[strlen(token.name) + 4]; // INT[token.name]\0
+        strcpy(symbol, "INT");
+        strcat(symbol, token.name);
+        
+        put_symbol((struct Symbol_t) { .name = symbol, .sym_class = SNUM_LIT, .value = token.name, .address = dsp, .segment = DATA_SEGMENT });
+      }
+      else if(token.tok_class == XARR)
+      {
+        error = arr_symbol_check();
+      }
     }
-    else if(token.tok_class == XARR)
+    
+    if(error)
     {
-      error = arr_symbol_check();
+      printf("\e[0;31mLexicalli: Symbol Table Failure\e[0m\n\t");
+      switch(error)
+      {
+        case 1:
+          printf("Expected identifier after CLASS\n");
+          break;
+        case -1:
+          printf("End of File encountered\n");
+          break;
+        case -2:
+          printf("Expected identifier after PROCEDURE\n");
+          break;
+        case 3: 
+          printf("Expected numeric literal in variable declaration\n");
+          break;
+        case 4: 
+          printf("Expected assignment, comma, or semicolon\n");
+          break;
+        case 5: 
+          printf("Expected [\n");
+          break;
+        case 6: 
+          printf("Expected numeric literal for array length\n");
+          break;
+      }
     }
+    else
+      printf("Lexicalli: Symbol Table Success\n");
+      
+    fclose(inf);
+    fclose(of);
   }
-  
-  if(error)
-    printf("Lexicalli: Symbol Table Failure: code %d\n", error); // Do error checking here
-  else
-    printf("Lexicalli: Symbol Table Success\n");
-  
-  fclose(inf);
-  fclose(of);
+
   free(scanner_output);
   free(symbol_output);
     
