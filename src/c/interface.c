@@ -16,6 +16,7 @@ void scanner_init()
 {
   scanner_infile = fopen(scanner_input, "r");
   scanner_outfile = fopen(scanner_output, "w");
+  fprintf(scanner_outfile, "Name, Class\n");
 }
 
 void scanner_release()

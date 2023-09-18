@@ -71,6 +71,7 @@ int main(int argc, char **argv)
   int cls;
   int error = 0;
   
+  fprintf(of, "Name, Class, Value, Address, Segment\n");
   while(!error && fscanf(inf, "%s %d\n", name, &cls) != EOF)
   {
     token.name = name;
