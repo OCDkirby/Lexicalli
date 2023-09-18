@@ -7,7 +7,8 @@
 // Token classes
 enum Token_Class
 { 
-  XCLASS = -1, XVAR = -2, XCONST = -3, IDENT = 6,
+  XCLASS = -1, XVAR = -2, XCONST = -3, IDENT = 6, 
+  IF = -4, THEN = -5, XPROC = -6, WHILE = -7, DO = -8, CALL = -9, ODD = -10,
   INTEGER = 4,
   ASSIGN = 12, ADDOP = 21, MOP = 10, RELOP = 13, 
   LB = 25, RB = 27, COMMA = 29, SEMI = 17,

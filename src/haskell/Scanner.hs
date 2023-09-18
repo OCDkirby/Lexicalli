@@ -43,15 +43,15 @@ end_file = '\255' -- C's EOF macro is integer -1, signed 4-byte.
 alphabet = symbols ++ digits ++ letters ++ whitespace ++ [end_file]
 
 -- Structures and subroutines requiring modification later as I add more to the language
-reserved_words = ["CLASS", "VAR", "CONST"]
+reserved_words = ["CLASS", "VAR", "CONST", "IF", "THEN", "PROCEDURE", "WHILE", "DO", "CALL", "ODD"]
 -- Note: the end states are just rows of their number because the value doesn't matter, we never check that state
 --                 L,  D,  *,  /,  =,  <, ws, er,  ;,  +,  -, lb, rb,  ,
 state_matrix = [[  5,  3,  2,  7, 11, 14,  0,  1, 17, 20, 22, 24, 26, 28 ], -- Start state
                 [  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1 ], -- Error
                 [ 18, 18, 18, 18, 18, 18, 18,  1,  1, 18, 18,  1,  1, 18 ], -- Intermediate * char
-                [  1,  3,  4,  4,  4,  4,  4,  1,  4,  4,  4,  1,  1,  4 ], -- Intermediate digit
+                [  1,  3,  4,  4,  4,  4,  4,  1,  4,  4,  4,  4,  1,  4 ], -- Intermediate digit
                 [  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4 ], -- Integer
-                [  5,  5,  6,  6,  6,  6,  6,  1,  6,  6,  6,  1,  1,  6 ], -- Intermediate letters/digits
+                [  5,  5,  6,  6,  6,  6,  6,  1,  6,  6,  6,  6,  1,  6 ], -- Intermediate letters/digits
                 [  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6 ], -- Identifier
                 [ 10, 10,  8, 10, 10, 10, 10,  1,  1, 10, 10,  1,  1,  1 ], -- Intermediate / char
                 [  8,  8,  9,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8 ], -- /* and intermediate comment
