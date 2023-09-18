@@ -1,0 +1,21 @@
+CLASS Arrays
+{
+  ARRAY arr[5];
+  ARRAY axs[4], abs[3];
+  VAR X = 2, Y = 0;
+
+  arr[0] = 2;
+  arr[1] = 4;
+  arr[2] = 6;
+  arr[3] = 8;
+  arr[4] = 10
+
+  PRINT arr[0];
+  PRINT arr[X];
+
+  WHILE Y < 5 DO
+  {
+    PRINT arr[Y];
+    Y = Y + 1;
+  }
+}
