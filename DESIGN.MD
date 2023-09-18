@@ -1,7 +1,8 @@
 # Compiler Project Architecture
 ## Files
 ### src
-* **cpp**: C and C++ code files.
+* **c**: C code files.
+* **cpp**: C++ code files.
 * **hs**: Haskell code files.
 
 ### include
@@ -22,4 +23,4 @@ Output for executables.
 
 ## Commands I used
 1. `ghc -c -O src/haskell/** -outputdir tmp -stubdir include/stubs -Iinclude`: all haskell files compiled with include directory `include` into `tmp` with stubs placed in `include/stubs` 
-2. `ghc --make src/cpp/*.c src/cpp/*.cpp src/haskell/*.hs -no-hs-main -outputdir tmp -lstdc++ -lKirbParse_Static -Llib -Iinclude -o bin/calli`: uses GHC's ability to heuristically call `gcc` to compile the entire project with include directory `include` without a Haskell main function into `tmp`, then look for libraries in `lib` and link to `libstdc++` and `KirbParse`, placing the binary in `bin`
+2. `ghc --make src/c/* src/cpp/* src/haskell/* -no-hs-main -outputdir tmp -lstdc++ -lKirbParse_Static -Llib -Iinclude -o bin/calli`: uses GHC's ability to heuristically call `gcc` to compile the entire project with include directory `include` without a Haskell main function into `tmp`, then look for libraries in `lib` and link to `libstdc++` and `KirbParse`, placing the binary in `bin`
