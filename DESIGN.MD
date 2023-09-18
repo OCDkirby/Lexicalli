@@ -1,5 +1,7 @@
 # Compiler Project Architecture
 ## Files
+### cabal-haskell
+Original project structure with several small generic structures that I built the scanner on top of.
 ### src
 * **c**: C code files.
 * **cpp**: C++ code files.
