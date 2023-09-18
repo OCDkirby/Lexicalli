@@ -28,10 +28,10 @@ get_char_cast = do
 -- Reserved word checking and special cases where state number doesn't match the C enum value
 token_state_to_class :: String -> Int -> Int
 token_state_to_class tok st | (elem tok reserved_words) = -1 * ((fromJust $ (elemIndex tok reserved_words)) + 1)
-                      | (st == 18)                = 10 -- Combine * and / to MOP
-                      | (st == 23)                = 21 -- Combine binary +/- to ADDOP
-                      | (st == 15 || st == 19)    = 13 -- Combine relational operators
-                      | otherwise                 = st
+                            | (st == 18)                = 10 -- Combine * and / to MOP
+                            | (st == 23)                = 21 -- Combine binary +/- to ADDOP
+                            | (st == 15 || st == 19)    = 13 -- Combine relational operators
+                            | otherwise                 = st
 
 -- Alphabet building, currently some parts are unused
 symbols = "+-*/{}()=!<>,"
