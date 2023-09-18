@@ -1,5 +1,5 @@
 // lexical.h
-// C portion of core functionality for lexical analyzer
+// Common core declarations for lexical analyzer
 
 #ifndef LEXICAL_H
 #define LEXICAL_H

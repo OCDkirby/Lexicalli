@@ -1,3 +1,4 @@
+-- DFA.hs
 -- Generic Deterministic Finite State Automaton
 
 module DFA where

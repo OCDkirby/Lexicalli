@@ -1,4 +1,7 @@
+-- Stack.hs
 -- Functional linked stack
+-- Really just a wrapper for a list but much more intuitive to read than 
+--  Haskell's list syntax when used in state transition functions
 
 module Stack where
   type Stack d = [d]

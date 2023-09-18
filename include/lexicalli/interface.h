@@ -1,4 +1,6 @@
-// Passthrough functions from main cpp program to haskell
+// interface.h
+// Passthrough functions from main cpp program to Haskell
+// in C because no current Haskell implementation can handle name mangling of stubs
 
 #ifndef INTERFACE_H
 #include <stdio.h>

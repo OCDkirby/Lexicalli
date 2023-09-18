@@ -1,3 +1,7 @@
+// test.c
+// Initial testing of the Haskell portions of the analyzer and main routine
+// Will be ported to C++ at a later date
+
 #include <stdio.h>
 #include "HsFFI.h" // Foreign Function Interface, part of the Haskell standard
 #include "kirbparse.h"

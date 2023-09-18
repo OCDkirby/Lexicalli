@@ -1,3 +1,6 @@
+-- PDA.hs
+-- Generic Pushdown Automaton
+
 module PDA where
   import Stack
   -- Defines a Pushdown Automaton with Q, Sigma, Gamma, delta, q_0, Z, and F

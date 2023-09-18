@@ -1,5 +1,9 @@
+-- lexical.hs
+-- Main Haskell module for lexical analysis
+
+-- Allow exporting and importing symbols
 {-# LANGUAGE ForeignFunctionInterface #-}
-{-# LANGUAGE CApiFFI #-}
+{-# LANGUAGE CApiFFI #-} -- Allows better imports with capi as opposed to ccall
 
 module Lexical where
   

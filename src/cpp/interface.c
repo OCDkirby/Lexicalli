@@ -1,3 +1,6 @@
+// interface.c
+// Implementations for the C functions that interface with Haskell
+
 #include <stdio.h>
 #include "lexicalli/interface.h"
 

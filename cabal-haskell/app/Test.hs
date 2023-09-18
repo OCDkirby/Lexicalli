@@ -1,3 +1,6 @@
+-- Test.hs
+-- Dummy tests of my automaton implementations
+
 import DFA
 import PDA
 import Stack

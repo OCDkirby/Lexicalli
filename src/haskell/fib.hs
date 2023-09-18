@@ -1,3 +1,6 @@
+-- fib.hs
+-- Test module from HaskellWiki for the FFI
+
 {-# LANGUAGE ForeignFunctionInterface #-}
 
 module Safe where
