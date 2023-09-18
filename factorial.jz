@@ -1,0 +1,27 @@
+CLASS Factorial {
+  VAR X, Y;
+
+  PROCEDURE FactHelper() {
+    IF X > 1 THEN {
+      Y = Y * X;
+      X = X - 1;
+      CALL FactHelper();
+    }
+  }
+
+  PROCEDURE Fact() {
+    Y = 1; /* Initialize */
+
+    /* 
+     * X = 0 -> Y = 1, 
+     * X = 1 -> Y = 1 ,
+     * X = n -> Y = n * Fact(n - 1)
+     */
+    CALL FactHelper()
+  }
+
+  GET X;
+  CALL Fact();
+
+  PRINT Y
+}
