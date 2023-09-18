@@ -5,7 +5,7 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
 {-# LANGUAGE CApiFFI #-} -- Allows better imports with capi as opposed to ccall
 
-module Lexical where
+module Scanner where
 
 import Foreign.C.Types
 import Foreign.C.String

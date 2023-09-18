@@ -27,7 +27,7 @@ enum Prelim_t
 // Token classes
 enum Token_t 
 { 
-  XCLASS = -1, XVAR = -2, XCONST = -3, IDENT = 6, CLASS = 3, VAR = 7, CONST = 5
+  XCLASS = -1, XVAR = -2, XCONST = -3, IDENT = 6, CLASS = 3, VAR = 7, CONST = 5,
   INTEGER = 4,
   ASSIGN = 12, ADDOP = 21, MOP = 10, RELOP = 13, 
   LB = 25, RB = 27, COMMA = 29, SEMI = 17,
@@ -36,7 +36,7 @@ enum Token_t
 // Symbol table classes
 enum Symbol_t 
 { 
-  SSUB = 1, SVAR = 2, SCONST = 3, SNUM_LIT = 4
+  SSUB = 3, SVAR = 7, SCONST = 5, SNUM_LIT = 9
 };
 // Symbol table segments
 enum Segment_t { CODE_SEGMENT = 0, DATA_SEGMENT = 1 };
@@ -51,7 +51,7 @@ struct Symbol
 {
   char *token;
   enum Symbol_t sym_t;
-  int *value;
+  char *value;
   int address;
   enum Segment_t segment;
 };  
