@@ -8,4 +8,4 @@ module DFA where
   --  before we covered it in class
   -- Deviations from mathematics: Doesn't require a state alphabet as 
   --  the state type is a generic parameter, so Q/K is removed from the tuple
-  type D_F_Automaton state term = ([term], (state->term->state), state, (state->Bool))
+  type D_F_Automaton state term = ([term], state->term->state, state, state->Bool)

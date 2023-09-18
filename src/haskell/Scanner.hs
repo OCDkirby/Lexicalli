@@ -21,16 +21,14 @@ foreign import capi "lexicalli/interface.h put_token" put_token :: CString -> CI
 -- Helper IO
 -- Wrapper for getting the character via C
 get_char_cast :: IO Char
-get_char_cast = do
-  c <- get_char
-  return (castCCharToChar c)
+get_char_cast = do castCCharToChar <$> get_char
 
 -- Reserved word checking and special cases where state number doesn't match the C enum value
 token_state_to_class :: String -> Int -> Int
-token_state_to_class tok st | (elem tok reserved_words) = -1 * ((fromJust $ (elemIndex tok reserved_words)) + 1)
-                            | (st == 18)                = 10 -- Combine * and / to MOP
-                            | (st == 23)                = 21 -- Combine binary +/- to ADDOP
-                            | (st == 15 || st == 19)    = 13 -- Combine relational operators
+token_state_to_class tok st | tok `elem` reserved_words = -1 * (fromJust (elemIndex tok reserved_words) + 1)
+                            | st == 18                  = 10 -- Combine * and / to MOP
+                            | st == 23                  = 21 -- Combine binary +/- to ADDOP
+                            | st == 15 || st == 19      = 13 -- Combine relational operators
                             | otherwise                 = st
 
 -- Alphabet building, currently some parts are unused
@@ -55,7 +53,7 @@ state_matrix = [[  5,  3,  2,  7, 11, 14,  0,  1, 17, 20, 22, 24, 26, 28, 30, 32
                 [  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6 ], -- Identifier
                 [ 10, 10,  8, 10, 10, 10, 10,  1,  1, 10, 10,  1,  1,  1, 10, 10,  1,  1 ], -- Intermediate / char
                 [  8,  8,  9,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8 ], -- /* and intermediate comment
-                [  8,  8,  8,  0,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8 ], -- */ and intermediate comment
+                [  8,  8,  8,  0,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8 ], --  */ and intermediate comment
                 [ 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10 ], -- Division operator
                 [ 12, 12,  1,  1, 13,  1, 12,  1,  1, 12, 12,  1,  1,  1, 12,  1,  1,  1 ], -- Intermediate =
                 [ 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12 ], -- Assignment operator
@@ -90,36 +88,36 @@ state_matrix = [[  5,  3,  2,  7, 11, 14,  0,  1, 17, 20, 22, 24, 26, 28, 30, 32
                 
 end_states =    [ 1, 4, 6, 10, 12, 13, 15, 17, 18, 19, 21, 23, 25, 27, 29, 31, 33, 35, 37, 40 ] -- Stop the parse on these states
 dump_states =   [ 0, 8, 9 ] -- Flush the token builder list on these states
-state_transition :: Int -> Char -> Int -- Automated row-column lookup
-state_transition s c | (elem c letters)            = state_matrix!!s!!0
-                     | (elem c digits)             = state_matrix!!s!!1
-                     | (c == '*')                  = state_matrix!!s!!2
-                     | (c == '/')                  = state_matrix!!s!!3
-                     | (c == '=')                  = state_matrix!!s!!4
-                     | (c == '<')                  = state_matrix!!s!!5
-                     | (elem c whitespace)         = state_matrix!!s!!6
-                     | (c == ';' || c == end_file) = state_matrix!!s!!8 
-                     | (c == '+')                  = state_matrix!!s!!9
-                     | (c == '-')                  = state_matrix!!s!!10
-                     | (c == '{')                  = state_matrix!!s!!11
-                     | (c == '}')                  = state_matrix!!s!!12
-                     | (c == ',')                  = state_matrix!!s!!13
-                     | (c == '(')                  = state_matrix!!s!!14
-                     | (c == ')')                  = state_matrix!!s!!15
-                     | (c == '>')                  = state_matrix!!s!!16
-                     | (c == '!')                  = state_matrix!!s!!17
+stateTransition :: Int -> Char -> Int -- Automated row-column lookup
+stateTransition s c  | c `elem` letters            = state_matrix!!s!!0
+                     | c `elem` digits             = state_matrix!!s!!1
+                     | c == '*'                    = state_matrix!!s!!2
+                     | c == '/'                    = state_matrix!!s!!3
+                     | c == '='                    = state_matrix!!s!!4
+                     | c == '<'                    = state_matrix!!s!!5
+                     | c `elem` whitespace         = state_matrix!!s!!6
+                     | c == ';' || c == end_file   = state_matrix!!s!!8 
+                     | c == '+'                    = state_matrix!!s!!9
+                     | c == '-'                    = state_matrix!!s!!10
+                     | c == '{'                    = state_matrix!!s!!11
+                     | c == '}'                    = state_matrix!!s!!12
+                     | c == ','                    = state_matrix!!s!!13
+                     | c == '('                    = state_matrix!!s!!14
+                     | c == ')'                    = state_matrix!!s!!15
+                     | c == '>'                    = state_matrix!!s!!16
+                     | c == '!'                    = state_matrix!!s!!17
                      | otherwise                   = state_matrix!!s!!7 -- Unexpected/illegal char
 
 -- Unchanging helper subroutines
-is_end :: Int -> Bool
-is_end x = elem x end_states
-dump_token :: Int -> Bool
-dump_token s = elem s dump_states
+isEnd :: Int -> Bool
+isEnd x = x `elem` end_states
+dumpToken :: Int -> Bool
+dumpToken s = s `elem` dump_states
 
 -- Main token scanner, scans character by character and returns the newest token
 -- Function to check for valid grammar from an input automaton, a partial token, and a dump token func
 -- Returns the next list of terminals denoting a token, its class, and the start token to resume parsing on
-scan :: D_F_Automaton state term -> [term] -> (IO term) -> (state -> Bool) -> IO ([term], state, term)
+scan :: D_F_Automaton state term -> [term] -> IO term -> (state -> Bool) -> IO ([term], state, term)
 scan (sigma, delta, s, f) token gt dump = do
   t <- gt --  Get a new terminal (character)
   
@@ -129,19 +127,17 @@ scan (sigma, delta, s, f) token gt dump = do
   if f st then return (token, st, t)
   else do
     if dump st then do -- Flush the entire token so far for the next parse, ie whitespace, comments, etc
-      ret <- scan (sigma, delta, st, f) [] gt dump 
-      return ret
+      scan (sigma, delta, st, f) [] gt dump 
     else do
-      ret <- scan (sigma, delta, st, f) (token ++ [t]) gt dump
-      return ret
+      scan (sigma, delta, st, f) (token ++ [t]) gt dump
 
 -- Loop calling DFA scanner and writing tokens to the intermediate file
 -- While running this function my computer completely filled with bees.
 -- I think they must have a hive inside the log, because it wouldn't
 --  make sense for them to have a hive inside the recursion.
 -- (they couldn't store any honey in the comb beyond depth 1)
-log_and_recurse :: (String, Int, Char) -> IO () 
-log_and_recurse (token, st, ch) = do
+logAndRecurse :: (String, Int, Char) -> IO () 
+logAndRecurse (token, st, ch) = do
   
   -- TODO Error checking based on current token and character
   if st == 1 then putStrLn "Lexicalli: ERROR"
@@ -157,12 +153,12 @@ log_and_recurse (token, st, ch) = do
       -- Resume the parse in the state from the character
       -- The reason for this conditional is that I don't want a leading whitespace
       --  in my next token
-      if elem ch whitespace then do
-        tok <- scan (alphabet, state_transition, 0, is_end) [] get_char_cast dump_token
-        log_and_recurse tok
+      if ch `elem` whitespace then do
+        tok <- scan (alphabet, stateTransition, 0, isEnd) [] get_char_cast dumpToken
+        logAndRecurse tok
       else do
-        tok <- scan (alphabet, state_transition, (state_transition 0 ch), is_end) [ch] get_char_cast dump_token
-        log_and_recurse tok
+        tok <- scan (alphabet, stateTransition, stateTransition 0 ch, isEnd) [ch] get_char_cast dumpToken
+        logAndRecurse tok
   
 -- Called by C
 run_scanner :: IO ()
@@ -170,10 +166,10 @@ run_scanner = do
   putStrLn "Lexicalli: Starting token generation"
   
   -- Get the first token
-  tok1 <- scan (alphabet, state_transition, 0, is_end) [] get_char_cast dump_token
+  tok1 <- scan (alphabet, stateTransition, 0, isEnd) [] get_char_cast dumpToken
   
   -- Continue the token scan
-  log_and_recurse tok1
+  logAndRecurse tok1
   
 -- Tell the compiler to generate C headers called "stubs" to interface
 -- The linker will take those stubs and the object files from compiled Haskell code and package them together
