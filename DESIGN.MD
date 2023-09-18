@@ -21,8 +21,8 @@ Output for executables.
 
 ## Compilation
 1. Compile the Haskell files with `outputdir` set to `tmp` and `stubdir` set to `include/stubs`.
-2. compile the C/C++ code and link it to the Haskell objects in tmp as well as any required libraries (currently `stdc++` and `KirbParse`).
+2. compile the C code and link it to the Haskell objects in tmp.
 
 ## Commands I used
 1. `ghc -c -O src/haskell/** -outputdir tmp -stubdir include/stubs -Iinclude`: Any exported symbols have stubs generated with include directory `include` into `tmp` with stubs placed in `include/stubs` 
-2. `ghc --make src/c/* src/cpp/* src/haskell/* -no-hs-main -outputdir tmp -lstdc++ -lKirbParse_Static -Llib -Iinclude -o bin/calli`: uses GHC's ability to heuristically call `gcc` to compile the entire project with include directory `include` without a Haskell main function into `tmp`, then look for libraries in `lib` and link to `libstdc++` and `KirbParse`, placing the binary in `bin`
+2. `ghc --make src/c/* src/haskell/* -no-hs-main -outputdir tmp -Iinclude -o bin/calli`: uses GHC's ability to heuristically call `gcc` to compile the entire project with include directory `include` without a Haskell main function into `tmp`, placing the binary in `bin`
