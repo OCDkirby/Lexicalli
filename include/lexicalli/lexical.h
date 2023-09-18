@@ -4,26 +4,6 @@
 #ifndef LEXICAL_H
 #define LEXICAL_H
 
-enum Token_Class;
-enum Symbol_Class;
-enum Segment;
-struct Token_t;
-struct Symbol_t;
-
-/*
-// Preliminary token classes
-// Potentially unnecessary
-enum Prelim_t
-{
-  QIDENT, // Starts with letter and contains letters+numbers
-  QLIT, // Starts with quotes and stays until an end quote is found
-  QNUM, // Starts with number and contains numbers only (char in here before delim is err)
-  OP, // One of some specific tokens, could go to QIDENT/QLIT/QNUM without whitespace
-  WHITESPACE, // Reset state guaranteed
-  DELIM // Semicolon
-};
-*/
-
 // Token classes
 enum Token_Class
 { 

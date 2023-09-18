@@ -3,7 +3,8 @@
 // in C because no current Haskell implementation can handle name mangling of stubs
 // It should be said that I absolutely adore the ability to define extern chars
 //  and then modify them in the files including them, it's like global customization flags
-// I realize that they are global variables, and global variables are evil,
+// I realize that they are global variables in any file that includes this one, 
+//  and global variables are evil,
 //  but the way C handles them is so elegant I can't resist
 
 #include "lexical.h"

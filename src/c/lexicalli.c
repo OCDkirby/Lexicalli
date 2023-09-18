@@ -91,7 +91,10 @@ int main(int argc, char **argv)
     }
   }
   
-  printf("Lexicalli: Symbol Table Success\n");
+  if(error)
+    printf("Lexicalli: Symbol Table Failure\n"); // Do error checking here
+  else
+    printf("Lexicalli: Symbol Table Success\n");
   
   fclose(inf);
   fclose(of);

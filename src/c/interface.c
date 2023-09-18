@@ -16,7 +16,6 @@ void scanner_init()
 {
   scanner_infile = fopen(scanner_input, "r");
   scanner_outfile = fopen(scanner_output, "w");
-  // TODO more here
 }
 
 void scanner_release()
