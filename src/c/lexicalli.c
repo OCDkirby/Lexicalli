@@ -1,5 +1,13 @@
 // lexicalli.c
 // Main program body, calls Haskell portions of the analyzer
+/*
+ * Class: COSC 4318
+ * Lab: Translator
+ * Alternative: 1
+ * Option: N/A (eventually A)
+ * Version Number: floating point overflow error
+ * Date: 2/16/22
+ */
 
 #include <stdio.h>
 #include <stdlib.h>
