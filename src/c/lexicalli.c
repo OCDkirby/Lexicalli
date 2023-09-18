@@ -38,6 +38,7 @@ int class_symbol_check();
 int program_symbol_check();
 int var_symbol_check();
 int const_symbol_check();
+int arr_symbol_check();
 
 int main(int argc, char **argv)
 {
@@ -95,6 +96,10 @@ int main(int argc, char **argv)
       
       put_symbol((struct Symbol_t) { .name = symbol, .sym_class = SNUM_LIT, .value = token.name, .address = dsp, .segment = DATA_SEGMENT });
     }
+    else if(token.tok_class == XARR)
+    {
+      error = arr_symbol_check();
+    }
   }
   
   if(error)
@@ -151,7 +156,7 @@ int class_symbol_check()
       return 0;
     }
     else
-      return 1; // Wrong token after CLASS
+      return 1; // Expected identifier after CLASS
   }
   return EOF;
 }
@@ -168,7 +173,7 @@ int program_symbol_check()
       return 0;
     }
     else
-      return 1; // Wrong token after PROCEDURE
+      return -2; // Expected identifier after PROCEDURE
   }
   return EOF;
 }
@@ -277,6 +282,54 @@ int const_symbol_check()
         }
         else
           return 4; // Expected assignment operator, comma, or semicolon
+      } 
+    }
+    else if(cls == SEMI)
+      return 0; // Finished statement
+    else
+      return 2; // Expected identifier
+  }
+  return EOF;
+}
+
+int arr_symbol_check()
+{
+  char name[128];
+  char rs[128];
+  char val[128];
+  int cls;
+  while(fscanf(inf, "%s %d\n", name, &cls) != EOF)
+  {
+    if(cls == COMMA)
+    {
+      continue;
+    }
+    else if(cls == IDENT)
+    {
+      if(fscanf(inf, "%s %d\n", val, &cls) != EOF)
+      {
+        if(cls == LS)
+        {
+          if(fscanf(inf, "%s %d\n", val, &cls) != EOF)
+          {
+            if(cls == INTEGER)
+            {
+              if(fscanf(inf, "%s %d\n", rs, &cls) != EOF)
+              {
+                if(cls == RS)
+                  put_symbol((struct Symbol_t) { .name = name, .sym_class = SARR, .value = val, .address = dsp, .segment = DATA_SEGMENT });
+              }
+            }
+            else if(cls == IDENT) // That's a semantic analyzer's job
+            {
+              return 6; // Array length must be numeric literal
+            } 
+            else
+              return 3; // Expected numeric literal or expression
+          }
+        }
+        else
+          return 5; // Expected subsciption operator
       } 
     }
     else if(cls == SEMI)
