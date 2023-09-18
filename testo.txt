@@ -1,2 +1,2 @@
-test <= cs;
+test <= cs / ab; /*comment*/
 file = CALL open;

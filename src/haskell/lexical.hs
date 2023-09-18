@@ -54,14 +54,14 @@ reserved_words = ["CLASS", "VAR", "CONST"]
 --                L, D, *, /, =, <, ws, e, semi
 state_matrix = [[ 5, 3, 2, 7, 11, 14, 0, 1, 17 ],
                 [ 1, 1, 1, 1, 1, 1, 1, 1, 1 ], -- Error state
-                [ 18, 18, 18, 18, 18, 18, 18, 1, 1],
+                [ 18, 18, 18, 18, 18, 18, 18, 1, 1 ],
                 [ 1, 3, 4, 4, 4, 4, 4, 1, 4 ],
                 [ 4, 4, 4, 4, 4, 4, 4, 4, 4 ], -- Integer state
                 [ 5, 5, 6, 6, 6, 6, 6, 1, 6 ],
                 [ 6, 6, 6, 6, 6, 6, 6, 6, 6 ], -- Var state
                 [ 10, 10, 8, 10, 10, 10, 10, 1, 1 ],
                 [ 8, 8, 9, 8, 8, 8, 8, 8, 8 ], -- /*
-                [ 8, 8, 8, 0, 8, 8, 8, 8, 8 ], -- */
+                [ 8, 8, 8, 20, 8, 8, 8, 8, 8 ], -- intermediate comma
                 [ 10, 10, 10, 10, 10, 10, 10, 10, 10 ], -- Division operator state
                 [ 12, 12, 1, 1, 13, 1, 12, 1, 1 ], 
                 [ 12, 12, 12, 12, 12, 12, 12, 12, 12 ], -- Assignment operator
@@ -70,10 +70,12 @@ state_matrix = [[ 5, 3, 2, 7, 11, 14, 0, 1, 17 ],
                 [ 15, 15, 15, 15, 15, 15, 15, 15, 15 ], -- < Operator 
                 [ 19, 19, 1, 1, 1, 1, 19, 1, 1 ],
                 [ 17, 17, 17, 17, 17, 17, 17, 17, 17 ], -- semicolon
-                [ 18, 18, 18, 18, 18, 18, 18, 18, 18], -- Multiplication operator
-                [ 19, 19, 19, 19, 19, 19, 19, 19, 19]] -- <= Operator                            
-end_states = [ 1, 4, 6, 10, 12, 13, 15, 17, 18, 19]
-skip_states = [0, 8, 9]
+                [ 18, 18, 18, 18, 18, 18, 18, 18, 18 ], -- Multiplication operator
+                [ 19, 19, 19, 19, 19, 19, 19, 19, 19 ], -- <= Operator   
+                [ 0,  0,  0,  0,  0,  0,  0,  1,  0]]
+end_states = [ 1, 4, 6, 10, 12, 13, 15, 17, 18, 19 ]
+skip_states = [ 0, 8, 9, 20 ]
+dump_states = [ 0, 8, 9, 20 ]
 state_transition :: Int -> Char -> Int
 state_transition s c | (elem c letters)    = state_matrix!!s!!0
                      | (elem c digits)     = state_matrix!!s!!1
@@ -85,18 +87,17 @@ state_transition s c | (elem c letters)    = state_matrix!!s!!0
                      | (c == ';')          = state_matrix!!s!!8 
                      | otherwise           = state_matrix!!s!!7
 
-
 -- Unchanging helper subroutines
 is_end :: Int -> Bool
 is_end x = elem x end_states
-skip_state :: Int -> Bool
-skip_state s = elem s skip_states
+dump_token :: Int -> Bool
+dump_token s = elem s dump_states
 
 -- Main DFA scanner, scans character by character and returns the newest token
--- Function to check for valid grammar from an input automaton, a partial token, and a state skip callback
+-- Function to check for valid grammar from an input automaton, a partial token, and a dump token func
 -- Returns the next list of terminals denoting a token, its class, and the start token to resume parsing on
 scan :: D_F_Automaton state term -> [term] -> (IO term) -> (state -> Bool) -> IO ([term], state, term)
-scan (sigma, delta, s, f) token gt sk = do
+scan (sigma, delta, s, f) token gt dump = do
   t <- gt
   
   --  Get the new state based on leftover token from last parse
@@ -104,11 +105,11 @@ scan (sigma, delta, s, f) token gt sk = do
   -- Check for valid end-of-token, otherwise recurse with new state and slightly longer partial token
   if f st then return (token, st, t)
   else do
-    if sk st then do -- Don't include this terminal in the token, leading whitespace etc
-      ret <- (scan (sigma, delta, st, f) (token) gt sk) 
+    if dump st then do -- Flush the entire token so far
+      ret <- (scan (sigma, delta, st, f) [] gt dump) 
       return ret
     else do
-      ret <- (scan (sigma, delta, st, f) (token ++ [t]) gt sk) 
+      ret <- (scan (sigma, delta, st, f) (token ++ [t]) gt dump) 
       return ret
 
 -- Loop calling DFA scanner and writing tokens to the intermediate file
@@ -133,17 +134,17 @@ log_and_recurse (token, cls, ch) = do
       -- The reason for this conditional is that I don't want a leading whitespace
       --  in my next token
       if elem ch whitespace then do
-        tok <- scan (alphabet, state_transition, 0, is_end) [] get_char_cast skip_state
+        tok <- scan (alphabet, state_transition, 0, is_end) [] get_char_cast dump_token
         log_and_recurse tok
       else do
-        tok <- scan (alphabet, state_transition, (state_transition 0 ch), is_end) [ch] get_char_cast skip_state
+        tok <- scan (alphabet, state_transition, (state_transition 0 ch), is_end) [ch] get_char_cast dump_token
         log_and_recurse tok
   
 -- Called by C
 run_scanner :: IO ()
 run_scanner = do
   -- Get the first token
-  tok1 <- scan (alphabet, state_transition, 0, is_end) [] get_char_cast skip_state
+  tok1 <- scan (alphabet, state_transition, 0, is_end) [] get_char_cast dump_token
   
   -- Continue the token scan
   log_and_recurse tok1
