@@ -5,13 +5,14 @@
 #include "lexicalli/interface.h"
 
 char *scanner_input;
+char *scanner_output;
 FILE *in_file;
 FILE *pass_1_output;
 
 void scanner_init()
 {
   in_file = fopen(scanner_input, "r");
-  pass_1_output = fopen("tokens.lex", "w");
+  pass_1_output = fopen(scanner_output, "w");
   // TODO more here
 }
 

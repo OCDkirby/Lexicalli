@@ -141,19 +141,17 @@ scan (sigma, delta, s, f) token gt dump = do
 -- (they couldn't store any honey in the comb beyond depth 1)
 log_and_recurse :: (String, Int, Char) -> IO () 
 log_and_recurse (token, st, ch) = do
-  print_str_int_char (token, st, ch) -- Debug
-  putStrLn ""
   
   -- TODO Error checking based on current token and character
   if st == 1 then putStrLn "Lexicalli: ERROR"
   else do
     -- Allocate a CString called tok_string on the stack and marshal token into it,
     --  then log the token and its token class to the file
-    withCString token $ \ tok_string ->
-        put_token tok_string (CInt (fromIntegral (token_state_to_class token st)))
+    withCString token $ \tok_string ->
+      put_token tok_string (CInt (fromIntegral (token_state_to_class token st)))
   
     -- Continue analysis
-    if ch == end_file then putStrLn "Lexicalli: Success" -- file ended and we're in a successful state
+    if ch == end_file then putStrLn "Lexicalli: Parse Success" -- file ended and we're in a successful state
     else do
       -- Resume the parse in the state from the character
       -- The reason for this conditional is that I don't want a leading whitespace

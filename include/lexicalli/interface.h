@@ -6,6 +6,7 @@
 #define INTERFACE_H
 
 extern char *scanner_input;
+extern char *scanner_output;
 
 // Get the next character from the input file
 char get_char();
