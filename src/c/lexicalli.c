@@ -146,7 +146,7 @@ int class_symbol_check()
   {
     if(cls == IDENT)
     {
-      put_symbol((struct Symbol_t) { .name = name, .sym_class = SCLASS, .value = "-", .address = csp, .segment = CODE_SEGMENT });
+      put_symbol((struct Symbol_t) { .name = name, .sym_class = SCLASS, .value = "?", .address = csp, .segment = CODE_SEGMENT });
       return 0;
     }
     else
@@ -163,7 +163,7 @@ int program_symbol_check()
   {
     if(cls == IDENT)
     {
-      put_symbol((struct Symbol_t) { .name = name, .sym_class = SPROC, .value = "-", .address = csp, .segment = CODE_SEGMENT });
+      put_symbol((struct Symbol_t) { .name = name, .sym_class = SPROC, .value = "?", .address = csp, .segment = CODE_SEGMENT });
       return 0;
     }
     else
@@ -202,7 +202,7 @@ int var_symbol_check()
             else if(cls == IDENT) // That's a semantic analyzer's job
             {
               skip_to_comma = 1;
-              put_symbol((struct Symbol_t) { .name = name, .sym_class = SVAR, .value = "-", .address = dsp, .segment = DATA_SEGMENT });
+              put_symbol((struct Symbol_t) { .name = name, .sym_class = SVAR, .value = "0", .address = dsp, .segment = DATA_SEGMENT });
             } 
             else
               return 3; // Expected numeric literal or expression
@@ -210,11 +210,11 @@ int var_symbol_check()
         }
         else if(cls == COMMA)
         {
-          put_symbol((struct Symbol_t) { .name = name, .sym_class = SVAR, .value = "-", .address = dsp, .segment = DATA_SEGMENT });
+          put_symbol((struct Symbol_t) { .name = name, .sym_class = SVAR, .value = "0", .address = dsp, .segment = DATA_SEGMENT });
         }
         else if(cls == SEMI)
         {
-          put_symbol((struct Symbol_t) { .name = name, .sym_class = SVAR, .value = "-", .address = dsp, .segment = DATA_SEGMENT });
+          put_symbol((struct Symbol_t) { .name = name, .sym_class = SVAR, .value = "0", .address = dsp, .segment = DATA_SEGMENT });
           return 0; // Finished statement
         }
         else
