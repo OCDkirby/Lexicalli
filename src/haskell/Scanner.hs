@@ -20,16 +20,19 @@ foreign import capi "lexicalli/interface.h put_token" put_token :: CString -> CI
 
 -- Helper IO
 -- Wrapper for getting the character via C
-get_char_cast :: IO Char
-get_char_cast = do castCCharToChar <$> get_char
+getCharCast :: IO Char
+getCharCast = do castCCharToChar <$> get_char
 
 -- Reserved word checking and special cases where state number doesn't match the C enum value
-token_state_to_class :: String -> Int -> Int
-token_state_to_class tok st | tok `elem` reserved_words = -1 * (fromJust (elemIndex tok reserved_words) + 1)
-                            | st == 18                  = 10 -- Combine * and / to MOP
-                            | st == 23                  = 21 -- Combine binary +/- to ADDOP
-                            | st == 15 || st == 19      = 13 -- Combine relational operators
-                            | otherwise                 = st
+tokenStateToClass :: String -> Int -> Int
+tokenStateToClass tok st | tok `elem` reserved_words = -1 * (fromJust (elemIndex tok reserved_words) + 1)
+                         | st == 18                  = 10 -- Combine * and / to MOP
+                         | st == 23                  = 21 -- Combine binary +/- to ADDOP
+                          | st == 15 
+                         || st == 19 
+                         || st == 35 
+                         || st == 37                 = 13 -- Combine relational operators
+                         | otherwise                 = st
 
 -- Alphabet building, currently some parts are unused
 symbols = "+-*/{}()=!<>,"
@@ -145,7 +148,7 @@ logAndRecurse (token, st, ch) = do
     -- Allocate a CString called tok_string on the stack and marshal token into it,
     --  then log the token and its token class to the file
     withCString token (\tok_string -> 
-      put_token tok_string ((CInt . fromIntegral) (token_state_to_class token st)))
+      put_token tok_string ((CInt . fromIntegral) (tokenStateToClass token st)))
   
     -- Continue analysis
     if ch == end_file then putStrLn "Lexicalli: Token Generation Success" -- file ended and we're in a successful state
@@ -154,10 +157,10 @@ logAndRecurse (token, st, ch) = do
       -- The reason for this conditional is that I don't want a leading whitespace
       --  in my next token
       if ch `elem` whitespace then do
-        tok <- scan (alphabet, stateTransition, 0, isEnd) [] get_char_cast dumpToken
+        tok <- scan (alphabet, stateTransition, 0, isEnd) [] getCharCast dumpToken
         logAndRecurse tok
       else do
-        tok <- scan (alphabet, stateTransition, stateTransition 0 ch, isEnd) [ch] get_char_cast dumpToken
+        tok <- scan (alphabet, stateTransition, stateTransition 0 ch, isEnd) [ch] getCharCast dumpToken
         logAndRecurse tok
   
 -- Called by C
@@ -166,7 +169,7 @@ run_scanner = do
   putStrLn "Lexicalli: Starting token generation"
   
   -- Get the first token
-  tok1 <- scan (alphabet, stateTransition, 0, isEnd) [] get_char_cast dumpToken
+  tok1 <- scan (alphabet, stateTransition, 0, isEnd) [] getCharCast dumpToken
   
   -- Continue the token scan
   logAndRecurse tok1
