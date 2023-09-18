@@ -45,7 +45,7 @@ end_file = '\255' -- C's EOF macro is integer -1, signed 4-byte.
 alphabet = symbols ++ digits ++ letters ++ whitespace ++ [end_file]
 
 -- Structures and subroutines requiring modification later as I add more to the language
-reserved_words = ["CLASS", "VAR", "CONST", "IF", "THEN", "PROCEDURE", "WHILE", "DO", "CALL", "ODD"]
+reserved_words = ["CLASS", "VAR", "CONST", "IF", "THEN", "PROCEDURE", "WHILE", "DO", "CALL", "ODD", "PRINT", "GET"]
 -- Note: the end states are just rows of their number because the value doesn't matter, we never check that state
 --                 L,  D,  *,  /,  =,  <, ws, er,  ;,  +,  -, lb, rb,  ,,  (,  ),  >,  !
 state_matrix = [[  5,  3,  2,  7, 11, 14,  0,  1, 17, 20, 22, 24, 26, 28, 30, 32, 34, 38 ], -- Start state
