@@ -4,7 +4,7 @@
  * Class: COSC 4318
  * Lab: Translator
  * Alternative: 1
- * Option: N/A (eventually A)
+ * Option: A
  * Version Number: floating point overflow error
  * Date: 2/16/22
  */
