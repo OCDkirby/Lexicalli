@@ -13,7 +13,7 @@ import Data.Char (ord)
 
 -- Make certain C functions available to the linker
 foreign import capi "lexicalli/interface.h get_char" get_char :: IO CChar
-foreign import capi "lexicalli/interface.h put_token" put_token :: CString -> CInt -> CString -> CInt -> CInt 
+foreign import capi "lexicalli/interface.h put_token" put_token :: CString -> CInt -> IO ()
 
 -- Helper IO
 -- Wrapper for getting the character via C

@@ -3,9 +3,6 @@
 // in C because no current Haskell implementation can handle name mangling of stubs
 
 #ifndef INTERFACE_H
-#include <stdio.h>
-#include "lexical.h"
-
 #define INTERFACE_H
 
 extern char *scanner_input;
@@ -14,7 +11,7 @@ extern char *scanner_input;
 char get_char();
 
 // Place a symbol, its program segment, value, and location in the segment into the output file
-int put_token(char *symbol, int token_class);
+void put_token(char *symbol, int token_class);
 
 void scanner_init();
 void scanner_release();

@@ -36,8 +36,7 @@ char get_char()
   return (char) c;
 }
 
-int put_token(char *symbol, int token_class)
+void put_token(char *symbol, int token_class)
 {
   fprintf(pass_1_output, "%s %d\n", symbol, token_class);
-  return 0;
 }
