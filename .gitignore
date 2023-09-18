@@ -1,8 +1,8 @@
-bin/*
-tmp/*
-lib/*
-cabal-haskell/dist/*
-cabal-haskell/dist-newstyle/*
+bin/**
+tmp/**
+lib/**
+cabal-haskell/dist/**
+cabal-haskell/dist-newstyle/**
 *.lex
 *.sym
-include/stubs/*
+include/stubs/**
