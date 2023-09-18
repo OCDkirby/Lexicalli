@@ -1,4 +1,2 @@
-test file for get_char()
-this is a file.
-this is the second line;
-whyyyyyy
+test <= cs;
+file = CALL open;
