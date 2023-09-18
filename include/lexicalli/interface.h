@@ -14,7 +14,7 @@ extern char *scanner_input;
 char get_char();
 
 // Place a symbol, its program segment, value, and location in the segment into the output file
-int put_token(char *symbol, int segment, char *value, int location);
+int put_token(char *symbol, int token_class);
 
 void scanner_init();
 void scanner_release();

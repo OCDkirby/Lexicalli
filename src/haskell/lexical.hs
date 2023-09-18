@@ -1,7 +1,7 @@
 -- lexical.hs
 -- Main Haskell module for lexical analysis
 
--- Allow exporting and importing symbols
+-- Compiler macros to allow exporting and importing symbols
 {-# LANGUAGE ForeignFunctionInterface #-}
 {-# LANGUAGE CApiFFI #-} -- Allows better imports with capi as opposed to ccall
 
@@ -9,10 +9,7 @@ module Lexical where
 
 import Foreign.C.Types
 import Foreign.C.String
-import Data.List
-import Data.Maybe
 import Data.Char (ord)
-import Data.Array
 
 -- Make certain C functions available to the linker
 foreign import capi "lexicalli/interface.h get_char" get_char :: IO CChar
@@ -72,7 +69,7 @@ state_matrix = [[ 5, 3, 2, 7, 11, 14, 0, 1, 17 ],
                 [ 17, 17, 17, 17, 17, 17, 17, 17, 17 ], -- semicolon
                 [ 18, 18, 18, 18, 18, 18, 18, 18, 18 ], -- Multiplication operator
                 [ 19, 19, 19, 19, 19, 19, 19, 19, 19 ], -- <= Operator   
-                [ 0,  0,  0,  0,  0,  0,  0,  1,  0]]
+                [ 0,  0,  0,  0,  0,  0,  0,  1,  0 ]]
 end_states = [ 1, 4, 6, 10, 12, 13, 15, 17, 18, 19 ]
 skip_states = [ 0, 8, 9, 20 ]
 dump_states = [ 0, 8, 9, 20 ]
@@ -105,7 +102,7 @@ scan (sigma, delta, s, f) token gt dump = do
   -- Check for valid end-of-token, otherwise recurse with new state and slightly longer partial token
   if f st then return (token, st, t)
   else do
-    if dump st then do -- Flush the entire token so far
+    if dump st then do -- Flush the entire token so far for the next parse, ie whitespace, comments, etc
       ret <- (scan (sigma, delta, st, f) [] gt dump) 
       return ret
     else do
