@@ -10,7 +10,7 @@
 
 extern char *top_down_parse_in;
 
-char get_char(int off);
+char get_char(int skip);
 
 void token_scanner();
 
