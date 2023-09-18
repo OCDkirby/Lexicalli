@@ -8,10 +8,15 @@
 
 #define INTERFACE_H
 
-extern char *top_down_parse_in;
+extern char *scanner_input;
 
-char get_char(int skip);
+// Get the next character from the input file
+char get_char();
 
-void token_scanner();
+// Place a symbol, its program segment, value, and location in the segment into the output file
+int put_token(char *symbol, int segment, char *value, int location);
+
+void scanner_init();
+void scanner_release();
 
 #endif // INTERFACE_H

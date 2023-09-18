@@ -19,16 +19,13 @@ int main(int argc, char *argv[])
   
   // Initialize the Haskell env
   hs_init(&argc, &argv);
-  top_down_parse_in = "testo.txt"; // Set the file name to open
-  token_scanner(); // Set up the environment for Haskell
-  run();
-  /*
-    int i;
-
-    // Call the foreign function
-    i = fibonacci_hs(6);
-    printf("Fibonacci: %d\n", i);
-  */
+  scanner_input = "testo.txt"; // Set the file name to open
+  scanner_init(); // Set up the environment for Haskell
+  
+  // Run scanner on the file
+  run_scanner();
+  
+  scanner_release(); // Close intermediates
   hs_exit(); // Release Haskell 
   return 0;
 }

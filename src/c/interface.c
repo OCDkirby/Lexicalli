@@ -4,30 +4,40 @@
 #include <stdio.h>
 #include "lexicalli/interface.h"
 
-char *top_down_parse_in;
-FILE *file;
+char *scanner_input;
+FILE *in_file;
+FILE *pass_1_output;
 
-void token_scanner()
+void scanner_init()
 {
-  file = fopen(top_down_parse_in, "r");
+  in_file = fopen(scanner_input, "r");
+  pass_1_output = fopen("tokens.lex", "w");
   // TODO more here
 }
 
-char get_char(int skip)
+void scanner_release()
+{
+  if(in_file)
+    fclose(in_file);
+  if(pass_1_output)
+    fclose(pass_1_output);
+}
+
+char get_char()
 {
   int i = 0;
   int c;
-  if(file != NULL)
+  if(in_file != NULL)
   {
-    while(i <= skip)
-    {
-      c = fgetc(file);
-      if(c == EOF) // Offset goes past the end of the file
-        return c;
-      ++i;
-    }
+    c = fgetc(in_file);
   } 
   else
     return EOF;
   return (char) c;
+}
+
+int put_token(char *symbol, int segment, char *value, int location)
+{
+  fprintf(pass_1_output, "%s %d %s %d\n", symbol, segment, value, location);
+  return 0;
 }
