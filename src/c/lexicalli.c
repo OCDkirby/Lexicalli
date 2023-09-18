@@ -122,10 +122,11 @@ char* format_output(char* input, char *extension)
 
 int mem_offset(enum Symbol_Class cls)
 {
-  if(cls == SPROC)
-    return 8; // Size of class signature
-  else if(cls == SVAR || cls == SCONST || cls == SNUM_LIT)
-    return 4; // Size of integer
+  //if(cls == SPROC)
+    //return 2; // Instruction size
+  //else if(cls == SVAR || cls == SCONST || cls == SNUM_LIT)
+    //return 2; // Instruction size
+  return 2;
 }
 
 void put_symbol(struct Symbol_t sym)
@@ -166,7 +167,7 @@ int program_symbol_check()
       return 0;
     }
     else
-      return 1; // Wrong token after CLASS
+      return 1; // Wrong token after PROCEDURE
   }
   return EOF;
 }
