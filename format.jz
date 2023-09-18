@@ -1,0 +1,4 @@
+CLASS VAR {
+  VAR x = 2;
+  PRINT x
+}

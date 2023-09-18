@@ -1,0 +1,5 @@
+CLASS duplicate {
+  VAR X;
+
+  X = 5 ++ 2
+}
