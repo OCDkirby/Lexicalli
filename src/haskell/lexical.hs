@@ -12,6 +12,7 @@ import Foreign.C.String
 import Data.Char (ord)
 import Data.List (elemIndex)
 import Data.Maybe (fromJust)
+import DFA
 
 -- Make certain C functions available to the linker
 foreign import capi "lexicalli/interface.h get_char" get_char :: IO CChar
@@ -23,12 +24,6 @@ get_char_cast :: IO Char
 get_char_cast = do
   c <- get_char
   return (castCCharToChar c)
--- Easy debug printing for returns from the main dfa function
-print_str_int_char :: (String, Int, Char) -> IO ()
-print_str_int_char (s, i, c) = do
-  putStrLn s
-  print i
-  print c
 
 -- Reserved word checking and special cases where state number doesn't match the C enum value
 token_state_to_class :: String -> Int -> Int
@@ -37,46 +32,37 @@ token_state_to_class tok st | (elem tok reserved_words) = -1 * ((fromJust $ (ele
                       | (st == 23)                = 21 -- Combine binary +/- to ADDOP
                       | (st == 15 || st == 19)    = 13 -- Combine relational operators
                       | otherwise                 = st
-                        
-
--- Main DFA structure  
--- Generic type holding Sigma, delta, q_0, and F for a DFSA, needs types for its nonterminals and terminals
--- Called T, M, S, Z in the notes, I used the mathematical terms because I built this
---  before we covered it in class
--- Deviations from mathematics: Doesn't require a state alphabet as 
---  the state type is a generic parameter, so Q/K is removed from the tuple
-type D_F_Automaton state term = ([term], (state->term->state), state, (state->Bool))
 
 -- Alphabet building, currently some parts are unused
 symbols = "+-*/{}()=!<>,"
 digits = "1234567890"
 letters = "zxcvbnmasdfghjklqwertyuiopASDFGHJKLZXCVBNMQWERTYUIOP"
 whitespace = "\n\t "
-end_file = '\255'
+end_file = '\255' -- C's EOF macro is integer -1, signed 4-byte. 
+                  -- Casting to unsigned byte (a la the char type) results in 255.
 alphabet = symbols ++ digits ++ letters ++ whitespace ++ [end_file]
-
 
 -- Structures and subroutines requiring modification later as I add more to the language
 reserved_words = ["CLASS", "VAR", "CONST"]
 -- Note: the end states are just rows of their number because the value doesn't matter, we never check that state
 --                 L,  D,  *,  /,  =,  <, ws, er,  ;,  +,  -, lb, rb,  ,
-state_matrix = [[  5,  3,  2,  7, 11, 14,  0,  1, 17, 20, 22, 24, 26, 28 ],
+state_matrix = [[  5,  3,  2,  7, 11, 14,  0,  1, 17, 20, 22, 24, 26, 28 ], -- Start state
                 [  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1,  1 ], -- Error
-                [ 18, 18, 18, 18, 18, 18, 18,  1,  1, 18, 18,  1,  1, 18 ],
-                [  1,  3,  4,  4,  4,  4,  4,  1,  4,  4,  4,  1,  1,  4 ],
+                [ 18, 18, 18, 18, 18, 18, 18,  1,  1, 18, 18,  1,  1, 18 ], -- Intermediate * char
+                [  1,  3,  4,  4,  4,  4,  4,  1,  4,  4,  4,  1,  1,  4 ], -- Intermediate digit
                 [  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4,  4 ], -- Integer
-                [  5,  5,  6,  6,  6,  6,  6,  1,  6,  6,  6,  1,  1,  6 ],
+                [  5,  5,  6,  6,  6,  6,  6,  1,  6,  6,  6,  1,  1,  6 ], -- Intermediate letters/digits
                 [  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6,  6 ], -- Identifier
-                [ 10, 10,  8, 10, 10, 10, 10,  1,  1, 10, 10,  1,  1,  1 ],
+                [ 10, 10,  8, 10, 10, 10, 10,  1,  1, 10, 10,  1,  1,  1 ], -- Intermediate / char
                 [  8,  8,  9,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8 ], -- /* and intermediate comment
                 [  8,  8,  8,  0,  8,  8,  8,  8,  8,  8,  8,  8,  8,  8 ], -- */ and intermediate comment
                 [ 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10, 10 ], -- Division operator
                 [ 12, 12,  1,  1, 13,  1, 12,  1,  1, 12, 12,  1,  1,  1 ], -- Struct bracket-list initialization later?
                 [ 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12, 12 ], -- Assignment operator
                 [ 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13, 13 ], -- Comparison operator
-                [ 15, 15,  1,  1, 16, 15, 15,  1,  1, 15, 15,  1,  1,  1 ],
+                [ 15, 15,  1,  1, 16, 15, 15,  1,  1, 15, 15,  1,  1,  1 ], -- Intermediate < char
                 [ 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15, 15 ], -- < operator 
-                [ 19, 19,  1,  1,  1,  1, 19,  1,  1, 19, 19,  1,  1,  1 ],
+                [ 19, 19,  1,  1,  1,  1, 19,  1,  1, 19, 19,  1,  1,  1 ], -- Intermediate for <=
                 [ 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17, 17 ], -- semicolon
                 [ 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18, 18 ], -- Multiplication operator
                 [ 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19, 19 ], -- <= operator   
@@ -84,12 +70,12 @@ state_matrix = [[  5,  3,  2,  7, 11, 14,  0,  1, 17, 20, 22, 24, 26, 28 ],
                 [ 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21, 21 ], -- Addition operator
                 [ 23, 23,  1,  1,  1,  1, 23,  1,  1,  1, 23,  1,  1, 23 ], -- Similar note to list 20 for decrement
                 [ 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23, 23 ], -- Subtraction operator
-                [ 25, 25,  1,  1,  1,  1, 25,  1,  1,  1, 25, 25, 25,  1 ],
-                [ 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25 ], -- {
-                [ 27, 27,  1,  1,  1,  1, 27,  1, 27,  1, 27, 27, 27, 27 ],
-                [ 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27 ], -- }
-                [ 29, 29,  1,  1,  1,  1, 29,  1,  1, 29, 29, 29, 29,  1 ],
-                [ 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29 ]] -- Comma
+                [ 25, 25,  1,  1,  1,  1, 25,  1,  1,  1, 25, 25, 25,  1 ], -- Intermediate { char
+                [ 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25, 25 ], -- Open block
+                [ 27, 27,  1,  1,  1,  1, 27,  1, 27,  1, 27, 27, 27, 27 ], -- Intemediate } char
+                [ 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27, 27 ], -- Close block
+                [ 29, 29,  1,  1,  1,  1, 29,  1,  1, 29, 29, 29, 29,  1 ], -- Intermediate , char
+                [ 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29, 29 ]] -- Comma separator
                 
 end_states =    [ 1, 4, 6, 10, 12, 13, 15, 17, 18, 19, 21, 23, 25, 27, 29 ] -- Stop the parse on these states
 dump_states =   [ 0, 8, 9 ] -- Flush the token builder list on these states
@@ -115,14 +101,14 @@ is_end x = elem x end_states
 dump_token :: Int -> Bool
 dump_token s = elem s dump_states
 
--- Main DFA scanner, scans character by character and returns the newest token
+-- Main token scanner, scans character by character and returns the newest token
 -- Function to check for valid grammar from an input automaton, a partial token, and a dump token func
 -- Returns the next list of terminals denoting a token, its class, and the start token to resume parsing on
 scan :: D_F_Automaton state term -> [term] -> (IO term) -> (state -> Bool) -> IO ([term], state, term)
 scan (sigma, delta, s, f) token gt dump = do
-  t <- gt
+  t <- gt --  Get a new terminal (character)
   
-  --  Get the new state based on leftover token from last parse
+  --  Get the new state based on the current terminal
   let st = delta s t
   -- Check for valid end-of-token, otherwise recurse with new state and slightly longer partial token
   if f st then return (token, st, t)
@@ -147,8 +133,8 @@ log_and_recurse (token, st, ch) = do
   else do
     -- Allocate a CString called tok_string on the stack and marshal token into it,
     --  then log the token and its token class to the file
-    withCString token $ \tok_string ->
-      put_token tok_string (CInt (fromIntegral (token_state_to_class token st)))
+    withCString token (\tok_string -> 
+      put_token tok_string (CInt (fromIntegral (token_state_to_class token st))))
   
     -- Continue analysis
     if ch == end_file then putStrLn "Lexicalli: Parse Success" -- file ended and we're in a successful state
