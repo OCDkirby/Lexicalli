@@ -28,10 +28,11 @@ tokenStateToClass :: String -> Int -> Int
 tokenStateToClass tok st | tok `elem` reserved_words = -1 * (fromJust (elemIndex tok reserved_words) + 1)
                          | st == 18                  = 10 -- Combine * and / to MOP
                          | st == 23                  = 21 -- Combine binary +/- to ADDOP
-                          | st == 15 
+                         |  st == 15 
                          || st == 19 
                          || st == 35 
-                         || st == 37                 = 13 -- Combine relational operators
+                         || st == 37
+                         || st == 40                 = 13 -- Combine relational operators
                          | otherwise                 = st
 
 -- Alphabet building, currently some parts are unused
