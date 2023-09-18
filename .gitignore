@@ -4,4 +4,5 @@ lib/*
 cabal-haskell/dist/*
 cabal-haskell/dist-newstyle/*
 *.lex
+*.sym
 include/stubs/*

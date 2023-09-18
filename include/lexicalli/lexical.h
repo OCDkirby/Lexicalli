@@ -4,11 +4,11 @@
 #ifndef LEXICAL_H
 #define LEXICAL_H
 
-enum Token_t;
-enum Symbol_t;
-enum Segment_t;
-struct Token;
-struct Symbol;
+enum Token_Class;
+enum Symbol_Class;
+enum Segment;
+struct Token_t;
+struct Symbol_t;
 
 /*
 // Preliminary token classes
@@ -25,35 +25,35 @@ enum Prelim_t
 */
 
 // Token classes
-enum Token_t 
+enum Token_Class
 { 
-  XCLASS = -1, XVAR = -2, XCONST = -3, IDENT = 6, CLASS = 3, VAR = 7, CONST = 5,
+  XCLASS = -1, XVAR = -2, XCONST = -3, IDENT = 6,
   INTEGER = 4,
   ASSIGN = 12, ADDOP = 21, MOP = 10, RELOP = 13, 
   LB = 25, RB = 27, COMMA = 29, SEMI = 17,
 };
 
 // Symbol table classes
-enum Symbol_t 
+enum Symbol_Class
 { 
-  SSUB = 3, SVAR = 7, SCONST = 5, SNUM_LIT = 9
+  SSUB = 1, SVAR = 2, SCONST = 3, SNUM_LIT = 4
 };
 // Symbol table segments
-enum Segment_t { CODE_SEGMENT = 0, DATA_SEGMENT = 1 };
+enum Segment { CODE_SEGMENT = 0, DATA_SEGMENT = 1 };
 
-struct Token
+struct Token_t
 {
-  char *token;
-  enum Token_t tok_t;
+  char *name;
+  enum Token_Class tok_class;
 };
 
-struct Symbol
+struct Symbol_t
 {
-  char *token;
-  enum Symbol_t sym_t;
+  char *name;
+  enum Symbol_Class sym_class;
   char *value;
   int address;
-  enum Segment_t segment;
+  enum Segment segment;
 };  
 
 #endif // LEXICAL_H

@@ -2,35 +2,38 @@
 // Implementations for the C functions that interface with Haskell
 
 #include <stdio.h>
+#include <stdlib.h>
+#include "lexicalli/lexical.h"
 #include "lexicalli/interface.h"
 
-char *scanner_input;
-char *scanner_output;
-FILE *in_file;
-FILE *pass_1_output;
+char *scanner_input, *scanner_output;
+FILE *scanner_infile, *scanner_outfile;
+
+char *symbol_input, *symbol_output;
+FILE *symbol_infile, *symbol_outfile;
 
 void scanner_init()
 {
-  in_file = fopen(scanner_input, "r");
-  pass_1_output = fopen(scanner_output, "w");
+  scanner_infile = fopen(scanner_input, "r");
+  scanner_outfile = fopen(scanner_output, "w");
   // TODO more here
 }
 
 void scanner_release()
 {
-  if(in_file)
-    fclose(in_file);
-  if(pass_1_output)
-    fclose(pass_1_output);
+  if(scanner_infile)
+    fclose(scanner_infile);
+  if(scanner_outfile)
+    fclose(scanner_outfile);
 }
 
 char get_char()
 {
   int i = 0;
   int c;
-  if(in_file != NULL)
+  if(scanner_infile != NULL)
   {
-    c = fgetc(in_file);
+    c = fgetc(scanner_infile);
   } 
   else
     return EOF;
@@ -39,5 +42,5 @@ char get_char()
 
 void put_token(char *symbol, int token_class)
 {
-  fprintf(pass_1_output, "%s %d\n", symbol, token_class);
+  fprintf(scanner_outfile, "%s %d\n", symbol, token_class);
 }

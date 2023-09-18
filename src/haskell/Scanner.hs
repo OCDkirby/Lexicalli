@@ -1,5 +1,5 @@
--- lexical.hs
--- Main Haskell module for lexical analysis
+-- Scanner.hs
+-- Lexical analysis automaton
 
 -- Compiler macros to allow exporting and importing symbols
 {-# LANGUAGE ForeignFunctionInterface #-}
@@ -79,7 +79,7 @@ state_matrix = [[  5,  3,  2,  7, 11, 14,  0,  1, 17, 20, 22, 24, 26, 28 ], -- S
                 
 end_states =    [ 1, 4, 6, 10, 12, 13, 15, 17, 18, 19, 21, 23, 25, 27, 29 ] -- Stop the parse on these states
 dump_states =   [ 0, 8, 9 ] -- Flush the token builder list on these states
-state_transition :: Int -> Char -> Int
+state_transition :: Int -> Char -> Int -- Automated row-column lookup
 state_transition s c | (elem c letters)            = state_matrix!!s!!0
                      | (elem c digits)             = state_matrix!!s!!1
                      | (c == '*')                  = state_matrix!!s!!2
@@ -114,10 +114,10 @@ scan (sigma, delta, s, f) token gt dump = do
   if f st then return (token, st, t)
   else do
     if dump st then do -- Flush the entire token so far for the next parse, ie whitespace, comments, etc
-      ret <- (scan (sigma, delta, st, f) [] gt dump) 
+      ret <- scan (sigma, delta, st, f) [] gt dump 
       return ret
     else do
-      ret <- (scan (sigma, delta, st, f) (token ++ [t]) gt dump) 
+      ret <- scan (sigma, delta, st, f) (token ++ [t]) gt dump
       return ret
 
 -- Loop calling DFA scanner and writing tokens to the intermediate file
@@ -134,10 +134,10 @@ log_and_recurse (token, st, ch) = do
     -- Allocate a CString called tok_string on the stack and marshal token into it,
     --  then log the token and its token class to the file
     withCString token (\tok_string -> 
-      put_token tok_string (CInt (fromIntegral (token_state_to_class token st))))
+      put_token tok_string ((CInt . fromIntegral) (token_state_to_class token st)))
   
     -- Continue analysis
-    if ch == end_file then putStrLn "Lexicalli: Parse Success" -- file ended and we're in a successful state
+    if ch == end_file then putStrLn "Lexicalli: Token Generation Success" -- file ended and we're in a successful state
     else do
       -- Resume the parse in the state from the character
       -- The reason for this conditional is that I don't want a leading whitespace
@@ -152,6 +152,8 @@ log_and_recurse (token, st, ch) = do
 -- Called by C
 run_scanner :: IO ()
 run_scanner = do
+  putStrLn "Lexicalli: Starting token generation"
+  
   -- Get the first token
   tok1 <- scan (alphabet, state_transition, 0, is_end) [] get_char_cast dump_token
   
